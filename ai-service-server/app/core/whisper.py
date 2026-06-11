@@ -1,3 +1,4 @@
+import numpy as np
 import os
 import multiprocessing
 from typing import List, Dict, Any
@@ -59,16 +60,16 @@ def ms_to_hms(ms: int) -> str:
     hours, mins     = divmod(total_m, 60)
     return f"{hours:02d}:{mins:02d}:{secs:02d}.{ms_rem:03d}"
 
-def transcribe_audio_to_word_list(audio_file_path: str) -> List[Dict[str, Any]]:
+def transcribe_audio_to_word_list(waveform: np.ndarray) -> List[Dict[str, Any]]:
     """
-    Transcribe the given audio file using the pre-loaded Whisper model.
+    Transcribe the given audio waveform (float32 numpy array) using the pre-loaded Whisper model.
     Returns a list of transcribed words with their starting time, ending time, and duration
     similar to the output of '/home/thaian0609asd/Downloads/whisper_cpp_word_by_word(2).ipynb'.
     """
     model = get_whisper_model()
     
-    # transcribe accepts a media file path (automatically converts it using ffmpeg if not wav)
-    raw_segments = model.transcribe(audio_file_path)
+    # transcribe accepts a float32 numpy array directly
+    raw_segments = model.transcribe(waveform)
     
     word_list = []
     for seg in raw_segments:

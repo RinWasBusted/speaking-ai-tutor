@@ -1,34 +1,28 @@
 import { convertAudioTo16kMono } from '../../util/audioConverter.js';
 import { transcribeAudio, transcribePhonemes, generateResponse } from '../../service/ai.service.js';
-import fs from 'fs';
 
 /**
  * Service to process speech evaluation.
- * @param {string} inputPath - Absolute path of the uploaded audio file.
+ * @param {Buffer} audioBuffer - In-memory buffer of the uploaded audio file.
  * @param {string} originalParagraph - The original paragraph prompt the user read.
  * @returns {Promise<{ transcription: Array<Object>, evaluation: string }>}
  */
-export async function evaluateSpeech(inputPath, originalParagraph) {
-  // Convert audio to 16kHz mono WAV for Whisper & Wav2Vec2 transcription
-  const outputPath = await convertAudioTo16kMono(inputPath);
+export async function evaluateSpeech(audioBuffer, originalParagraph) {
+  // Convert audio buffer to 16kHz mono WAV buffer in-memory for Whisper & Wav2Vec2 transcription
+  const wavBuffer = await convertAudioTo16kMono(audioBuffer);
 
   let transcription = null;
   let phonemeResult = null;
   try {
-    // Transcribe the converted mono WAV file using Whisper
-    transcription = transcribeAudio(outputPath);
+    // Transcribe the converted mono WAV buffer using Whisper
+    transcription = transcribeAudio(wavBuffer);
     
     // Transcribe phonemes using Wav2Vec2
-    phonemeResult = transcribePhonemes(outputPath);
+    phonemeResult = transcribePhonemes(wavBuffer);
 
     [transcription, phonemeResult] = await Promise.all([transcription, phonemeResult]);
   } finally {
-    // Delete the converted file immediately after transcription attempts
-    if (fs.existsSync(outputPath)) {
-      fs.unlink(outputPath, (err) => {
-        if (err) console.error(`Failed to delete converted file ${outputPath}:`, err);
-      });
-    }
+    // No file cleanup is necessary anymore since everything is processed in-memory
   }
 
   const phonemesText = phonemeResult?.phonemes || 'No phoneme transcription available.';

@@ -1,6 +1,5 @@
 import axios from 'axios';
 import FormData from 'form-data';
-import fs from 'fs';
 
 /**
  * Sends a prompt to the configured OpenAI-compatible AI API and returns the generated text.
@@ -30,7 +29,7 @@ export async function generateResponse(prompt, options = {}) {
         content: prompt
       }
     ],
-    temperature: options.temperature ?? 0.7,
+    temperature: options.temperature ?? 0.6,
     stream: false,
     ...options
   };
@@ -63,11 +62,11 @@ export async function generateResponse(prompt, options = {}) {
 }
 
 /**
- * Transcribes an audio file using the custom Whisper API hosted on the ai-service-server.
- * @param {string} filePath - Absolute or relative path to the audio file.
+ * Transcribes an audio WAV buffer using the custom Whisper API hosted on the ai-service-server.
+ * @param {Buffer} wavBuffer - The in-memory WAV audio buffer.
  * @returns {Promise<Array<Object>>} - The list of transcription words with timestamps/details.
  */
-export async function transcribeAudio(filePath) {
+export async function transcribeAudio(wavBuffer) {
   const serviceEndpoint = process.env.AI_SERVICE_ENDPOINT;
 
   if (!serviceEndpoint) {
@@ -81,12 +80,15 @@ export async function transcribeAudio(filePath) {
       ? serviceEndpoint
       : `${serviceEndpoint.replace(/\/$/, '')}/api/v1/transcribe`;
 
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`Audio file not found at path: ${filePath}`);
+  if (!Buffer.isBuffer(wavBuffer)) {
+    throw new Error('Audio data must be provided as a Buffer.');
   }
 
   const formData = new FormData();
-  formData.append('file', fs.createReadStream(filePath));
+  formData.append('file', wavBuffer, {
+    filename: 'recording.wav',
+    contentType: 'audio/wav',
+  });
 
   try {
     const response = await axios.post(url, formData, {
@@ -107,11 +109,11 @@ export async function transcribeAudio(filePath) {
 }
 
 /**
- * Transcribes phonemes from an audio file using the custom Wav2Vec2 API hosted on the ai-service-server.
- * @param {string} filePath - Absolute or relative path to the audio file.
+ * Transcribes phonemes from an audio WAV buffer using the custom Wav2Vec2 API hosted on the ai-service-server.
+ * @param {Buffer} wavBuffer - The in-memory WAV audio buffer.
  * @returns {Promise<{phonemes: string}>} - The response containing the transcribed phonemes.
  */
-export async function transcribePhonemes(filePath) {
+export async function transcribePhonemes(wavBuffer) {
   const serviceEndpoint = process.env.AI_SERVICE_ENDPOINT;
 
   if (!serviceEndpoint) {
@@ -125,12 +127,15 @@ export async function transcribePhonemes(filePath) {
       ? serviceEndpoint
       : `${serviceEndpoint.replace(/\/$/, '')}/api/v1/transcribe-phonemes`;
 
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`Audio file not found at path: ${filePath}`);
+  if (!Buffer.isBuffer(wavBuffer)) {
+    throw new Error('Audio data must be provided as a Buffer.');
   }
 
   const formData = new FormData();
-  formData.append('file', fs.createReadStream(filePath));
+  formData.append('file', wavBuffer, {
+    filename: 'recording.wav',
+    contentType: 'audio/wav',
+  });
 
   try {
     const response = await axios.post(url, formData, {

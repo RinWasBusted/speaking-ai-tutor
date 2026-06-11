@@ -44,22 +44,19 @@ def load_audio(path: str):
     print(f"  Audio loaded  |  duration: {len(waveform)/TARGET_SR:.2f}s  |  sample rate: {TARGET_SR} Hz")
     return waveform
 
-def transcribe_phonemes(audio_path: str) -> str:
+def transcribe_phonemes(waveform: np.ndarray) -> str:
     """
-    Load an audio file and return the phoneme transcription.
+    Transcribe phonemes from a pre-loaded float32 NumPy array.
 
     Args:
-        audio_path: Path to a .wav, .mp3, .flac, or other audio file.
+        waveform: 1D float32 NumPy array containing the audio signal resampled to 16kHz mono.
 
     Returns:
         Space-separated phoneme string, e.g. 'HH AH L OW W ER L D'
     """
     model_instance, processor_instance, device_instance = get_wav2vec2_model()
 
-    # 1. Load audio
-    waveform = load_audio(audio_path)
-
-    # 2. Preprocess
+    # 1. Preprocess
     inputs = processor_instance(
         waveform,
         sampling_rate=TARGET_SR,
