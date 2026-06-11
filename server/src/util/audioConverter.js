@@ -1,6 +1,5 @@
 import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
-import fs from 'fs';
 
 /**
  * Converts input audio file to 16kHz mono WAV format.

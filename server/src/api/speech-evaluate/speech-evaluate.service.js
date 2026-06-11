@@ -16,10 +16,12 @@ export async function evaluateSpeech(inputPath, originalParagraph) {
   let phonemeResult = null;
   try {
     // Transcribe the converted mono WAV file using Whisper
-    transcription = await transcribeAudio(outputPath);
+    transcription = transcribeAudio(outputPath);
     
     // Transcribe phonemes using Wav2Vec2
-    phonemeResult = await transcribePhonemes(outputPath);
+    phonemeResult = transcribePhonemes(outputPath);
+
+    [transcription, phonemeResult] = await Promise.all([transcription, phonemeResult]);
   } finally {
     // Delete the converted file immediately after transcription attempts
     if (fs.existsSync(outputPath)) {
