@@ -105,3 +105,47 @@ export async function transcribeAudio(filePath) {
     throw new Error(`Whisper transcription request failed: ${typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage}`);
   }
 }
+
+/**
+ * Transcribes phonemes from an audio file using the custom Wav2Vec2 API hosted on the ai-service-server.
+ * @param {string} filePath - Absolute or relative path to the audio file.
+ * @returns {Promise<{phonemes: string}>} - The response containing the transcribed phonemes.
+ */
+export async function transcribePhonemes(filePath) {
+  const serviceEndpoint = process.env.AI_SERVICE_ENDPOINT;
+
+  if (!serviceEndpoint) {
+    throw new Error('AI_SERVICE_ENDPOINT is not defined in the environment variables.');
+  }
+
+  // Construct URL. The endpoint on ai-service-server is /api/v1/transcribe-phonemes
+  const url = serviceEndpoint.endsWith('/api/v1')
+    ? `${serviceEndpoint}/transcribe-phonemes`
+    : serviceEndpoint.endsWith('/api/v1/transcribe-phonemes')
+      ? serviceEndpoint
+      : `${serviceEndpoint.replace(/\/$/, '')}/api/v1/transcribe-phonemes`;
+
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Audio file not found at path: ${filePath}`);
+  }
+
+  const formData = new FormData();
+  formData.append('file', fs.createReadStream(filePath));
+
+  try {
+    const response = await axios.post(url, formData, {
+      headers: {
+        ...formData.getHeaders(),
+      },
+      // Increase timeout if transcription takes longer
+      timeout: 30000,
+    });
+
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.detail 
+      || error.response?.data 
+      || error.message;
+    throw new Error(`Wav2Vec2 phoneme transcription request failed: ${typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage}`);
+  }
+}

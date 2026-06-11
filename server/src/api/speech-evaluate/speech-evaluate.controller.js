@@ -12,7 +12,8 @@ export async function evaluateSpeechController(req, res) {
     }
 
     tempFilePath = req.file.path;
-    const result = await speechEvaluateService.evaluateSpeech(tempFilePath);
+    const { paragraph } = req.body;
+    const result = await speechEvaluateService.evaluateSpeech(tempFilePath, paragraph);
 
     res.status(200).json({
       transcription: result.transcription,
